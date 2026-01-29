@@ -18,13 +18,24 @@ import path from 'path';
 import chalk from 'chalk';
 import moment from 'moment-timezone';
 import axios from 'axios';
-import config from './config.cjs';
 import pkg from './lib/autoreact.cjs';
 import zlib from 'zlib';
 import { promisify } from 'util';
 
 const { emojis, doReact } = pkg;
-const prefix = process.env.PREFIX || config.PREFIX;
+
+// Configuration with your session ID
+const config = {
+    PREFIX: process.env.PREFIX || ".",
+    MODE: process.env.MODE || "public",
+    SESSION_ID: process.env.SESSION_ID || "BERA~H4sIAAAAAAAAA5VUW5OqOBD+K1t5xToqt4hVU7UoqKAoKnjbOg8RAkSuEi7iKf/7FuPMmXnYnZ19Szrp7q+//rp/gSQlFM9xA4a/QJaTChW4PRZNhsEQjErPwznoABcVCAwBWp1uh3vt7JNINyeSVsY7MeOi49XjqiAWu8LKUGR6sRYz+QU8OiArzxFxvghYRKdtMupVWL9Nuv69CKSbOtUMX9JTzuIChmHW8+79klqN/QIebUREcpL4ahbgGOcomuPGRCT/JnxFhErd9WZQ3NvSithdUR+wHKXw5h8dG6JAM058D0PW+B788XzaveLoSi8JddwT3MyMrezux5VgGMTdTKmJ696F23Bq/YRPiZ9gV3NxUpCi+Tbv49XSsNP9qQ/V8Wk+WAROLE4MRWc2VI+80hw3Pok9j+729veAK4F6vG6XSHPUkcVcHHfsCN6lC+Vg7fgrKDHhat+4vnAM7c/AzfxdK+H/4T3UassRlw3UdRwL5r7aDZq9Tmi2Nnrnor/y98pd4Y2A7Yffg59uwt1hMZlVnqiGRyvratQ0hcCx0mPgHboVOgRXMzysDgftAz4qy/wrlNT1wvPGGKwvzZE4Vu23ejYH6yaR5otVpQ3qeOKvF/clf7+buNA9eN4ub7Jy33n2ZDroh7iRTrS5++wuvhijXl9zceC/vFYU4kZzwbD/6IAc+4QWOSpImrQ2ju8A5FZb7OS4eGUX8NRcVq4UNCMuQKUW7Nb3ODsrxioXFofztEbxLM6yoDqQ+gV0QJanDqYUuzNCizRvDEwp8jEFw79+dkCCb8Wzb6/Z+h3gkZwWdlJmUYrc96a+PyLHScuk2DaJM24POAfD3ocZFwVJfNrSWCYodwJS4XGACgqGHooo/l0gzrH7Zvvt3Xq5uEAkoq2odVxX53qqLtkQGnQ6lVVfHvsy+Mj23rUnLYPAXVvsQLFZYV8R+WoI9bLmg+ldSCLHVa8OXV4Fntky1vHlH4KAIfDHrMeH7k2SoJiWYzXaCiWJUijPqMLcjdNxpKkhVPWRaSwvkyiabM/nyai8NpZ6NVU23ehelq2zMF/KG4/RDGYXC+P6pc3m4oo4+HOyvqyf1UwT5kuxOZw5bjPvZmszYq/m1OaFah/MFBOFZgVNy0uuDHKRKu6OmWv3I5k5nuqot0Fh6hn+lkHQSPwZnsmX9VNP8auQiQuGgBV4OIACC6HADVn4J/1Rt/1AWfYjwQXogAS1v1uAOEoznP9xxjkCHRA93TlOZHsDTpQgL7K9NkL78D4z0duuIq9yalO2V4/g19F/C/2fEJ7ktBLrPTqfYrwtk38ZyJGnHWxVquT+stzlvD+/rBzFWWkbypyEw2wzTxYKKrEZViELHo+fHZBFqPDSPG6nOT63ReZp2QpWS7z0q/0q9zTZ97dt2RGihfwxBBaJMS1QnIFhH4qSCDmO5Z+/zDzNZogGLQM7CK82ePwNWIV8a1EHAAA=",
+    AUTO_REACT: process.env.AUTO_REACT !== "false",
+    AUTO_STATUS_SEEN: process.env.AUTO_STATUS_SEEN !== "false",
+    AUTO_STATUS_REPLY: process.env.AUTO_STATUS_REPLY !== "false",
+    STATUS_READ_MSG: process.env.STATUS_READ_MSG || "✅ Auto Status Seen Bot By JAWAD-MD"
+};
+
+const prefix = config.PREFIX;
 const sessionName = "session";
 const app = express();
 const orange = chalk.bold.hex("#FFA500");
@@ -61,11 +72,11 @@ async function loadGiftedSession() {
         return false;
     }
     
-    // Check if session starts with "Gifted~"
+    // Check if session starts with "BERA~"
     if (config.SESSION_ID.startsWith("BERA~")) {
-        console.log("✅ Detected Gifted session format (GZIP compressed)");
+        console.log("✅ Detected BERA session format (GZIP compressed)");
         
-        // Extract Base64 part (everything after "Gifted~")
+        // Extract Base64 part (everything after "BERA~")
         const compressedBase64 = config.SESSION_ID.substring("BERA~".length);
         console.log("📏 Compressed Base64 length:", compressedBase64.length);
         
@@ -104,12 +115,12 @@ async function loadGiftedSession() {
                 return false;
             }
         } catch (error) {
-            console.error('❌ Failed to process Gifted session:', error.message);
+            console.error('❌ Failed to process BERA session:', error.message);
             console.error('🔍 Error details:', error);
             return false;
         }
     } else {
-        console.log("⚠️ SESSION_ID does not start with Gifted~");
+        console.log("⚠️ SESSION_ID does not start with BERA~");
         return false;
     }
 }
@@ -263,21 +274,27 @@ https://github.com/DEVELOPER-BERA/CLOUD-AI
 }
 
 async function init() {
+    console.log("🔍 DEBUG: Checking config.SESSION_ID...");
+    console.log("🔍 DEBUG: config.SESSION_ID value:", config.SESSION_ID ? "Set (length: " + config.SESSION_ID.length + ")" : "Not set");
+    console.log("🔍 DEBUG: config.SESSION_ID type:", typeof config.SESSION_ID);
+    console.log("🔍 DEBUG: Starts with BERA~?", config.SESSION_ID ? config.SESSION_ID.startsWith("BERA~") : false);
+    console.log("🔍 DEBUG: Contains CLOUD-AI~?", config.SESSION_ID ? config.SESSION_ID.includes("CLOUD-AI~") : false);
+    
     if (fs.existsSync(credsPath)) {
         console.log("✅ Existing session file found, loading it...");
         await start();
     } else {
         console.log("📝 No existing session file, checking config.SESSION_ID...");
         
-        if (config.SESSION_ID && config.SESSION_ID.startsWith("Gifted~")) {
-            console.log("📥 Attempting to load Gifted session (GZIP compressed)...");
+        if (config.SESSION_ID && config.SESSION_ID.startsWith("BERA~")) {
+            console.log("📥 Attempting to load BERA session (GZIP compressed)...");
             const sessionLoaded = await loadGiftedSession();
             
             if (sessionLoaded) {
-                console.log("✅ Gifted session loaded successfully!");
+                console.log("✅ BERA session loaded successfully!");
                 await start();
             } else {
-                console.log("❌ Failed to load Gifted session, falling back to QR code.");
+                console.log("❌ Failed to load BERA session, falling back to QR code.");
                 useQR = true;
                 await start();
             }
@@ -295,6 +312,8 @@ async function init() {
             }
         } else {
             console.log("🔒 No valid session found in config, QR code will be printed for authentication.");
+            console.log("💡 TIP: Make sure SESSION_ID starts with 'BERA~' for BERA session");
+            console.log("💡 TIP: Or starts with 'CLOUD-AI~' for Mega.nz session");
             useQR = true;
             await start();
         }
