@@ -5,9 +5,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "pm2 start index.js --deep-monitoring --attach --name  ᴊᴏᴇʟ xᴍᴅ ʙᴏᴛ",
-    "stop": "pm2 stop  ᴊᴏᴇʟ xᴍᴅ ʙᴏᴛ",
-    "restart": "pm2 restart  ᴊᴏᴇʟ xᴍᴅ ʙᴏᴛ"
+    "start": "node index.js"
+    
   },
   "keywords": ["lord-joel", "whatsapp-bot", "whatsapp md bot"],
   "author": " ᴊᴏᴇʟ xᴍᴅ ʙᴏᴛ",
