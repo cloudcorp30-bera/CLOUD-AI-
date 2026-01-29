@@ -23,7 +23,19 @@ import zlib from 'zlib';
 import { promisify } from 'util';
 
 const { emojis, doReact } = pkg;
-const prefix = process.env.PREFIX || ".";
+
+// Configuration - replace with your actual config or use environment variables
+const config = {
+    PREFIX: process.env.PREFIX || ".",
+    MODE: process.env.MODE || "public",
+    SESSION_ID: process.env.SESSION_ID || "BERA~H4sIAAAAAAAAA5VUW5OqOBD+K1t5xToqt4hVU7UoqKAoKnjbOg8RAkSuEi7iKf/7FuPMmXnYnZ19Szrp7q+//rp/gSQlFM9xA4a/QJaTChW4PRZNhsEQjErPwznoABcVCAwBWp1uh3vt7JNINyeSVsY7MeOi49XjqiAWu8LKUGR6sRYz+QU8OiArzxFxvghYRKdtMupVWL9Nuv69CKSbOtUMX9JTzuIChmHW8+79klqN/QIebUREcpL4ahbgGOcomuPGRCT/JnxFhErd9WZQ3NvSithdUR+wHKXw5h8dG6JAM058D0PW+B788XzaveLoSi8JddwT3MyMrezux5VgGMTdTKmJ696F23Bq/YRPiZ9gV3NxUpCi+Tbv49XSsNP9qQ/V8Wk+WAROLE4MRWc2VI+80hw3Pok9j+729veAK4F6vG6XSHPUkcVcHHfsCN6lC+Vg7fgrKDHhat+4vnAM7c/AzfxdK+H/4T3UassRlw3UdRwL5r7aDZq9Tmi2Nnrnor/y98pd4Y2A7Yffg59uwt1hMZlVnqiGRyvratQ0hcCx0mMgHboVOgRXMzysDgftAz4qy/wrlNT1wvPGGKwvzZE4Vu23ejYH6yaR5otVpQ3qeOKvF/clf7+buNA9eN4ub7Jy33n2ZDroh7iRTrS5++wuvhijXl9zceC/vFYU4kZzwbD/6IAc+4QWOSpImrQ2ju8A5FZb7OS4eGUX8NRcVq4UNCMuQKUW7Nb3ODsrxioXFofztEbxLM6yoDqQ+gV0QJanDqYUuzNCizRvDEwp8jEFw79+dkCCb8Wzb6/Z+h3gkZwWdlJmUYrc96a+PyLHScuk2DaJM24POAfD3ocZFwVJfNrSWCYodwJS4XGACgqGHooo/l0gzrH7Zvvt3Xq5uEAkoq2odVxX53qqLtkQGnQ6lVVfHvsy+Mj23rUnLYPAXVvsQLFZYV8R+WoI9bLmg+ldSCLHVa8OXV4Fntky1vHlH4KAIfDHrMeH7k2SoJiWYzXaCiWJUijPqMLcjdNxpKkhVPWRaSwvkyiabM/nyai8NpZ6NVU23ehelq2zMF/KG4/RDGYXC+P6pc3m4oo4+HOyvqyf1UwT5kuxOZw5bjPvZmszYq/m1OaFah/MFBOFZgVNy0uuDHKRKu6OmWv3I5k5nuqot0Fh6hn+lkHQSPwZnsmX9VNP8auQiQuGgBV4OIACC6HADVn4J/1Rt/1AWfYjwQXogAS1v1uAOEoznP9xxjkCHRA93TlOZHsDTpQgL7K9NkL78D4z0duuIq9yalO2V4/g19F/C/2fEJ7ktBLrPTqfYrwtk38ZyJGnHWxVquT+stzlvD+/rBzFWWkbypyEw2wzTxYKKrEZViELHo+fHZBFqPDSPG6nOT63ReZp2QpWS7z0q/0q9zTZ97dt2RGihfwxBBaJMS1QnIFhH4qSCDmO5Z+/zDzNZogGLQM7CK82ePwNWIV8a1EHAAA=",
+    AUTO_REACT: true,
+    AUTO_STATUS_SEEN: true,
+    AUTO_STATUS_REPLY: true,
+    STATUS_READ_MSG: "✅ Auto Status Seen Bot By JAWAD-MD"
+};
+
+const prefix = config.PREFIX;
 const sessionName = "session";
 const app = express();
 const orange = chalk.bold.hex("#FFA500");
@@ -32,7 +44,7 @@ let useQR = false;
 let initialConnection = true;
 const PORT = process.env.PORT || 3000;
 
-// FIXED: Added backticks around template string
+// FIXED: Correct template string
 const MAIN_LOGGER = pino({
     timestamp: () => `,"time":"${new Date().toJSON()}"`
 });
@@ -42,7 +54,7 @@ logger.level = "trace";
 const msgRetryCounterCache = new NodeCache();
 
 const __filename = new URL(import.meta.url).pathname;
-// FIXED: Changed _dirname to __dirname
+// FIXED: Correct variable name
 const __dirname = path.dirname(__filename);
 
 const sessionDir = path.join(__dirname, 'session');
@@ -52,17 +64,6 @@ if (!fs.existsSync(sessionDir)) {
     fs.mkdirSync(sessionDir, { recursive: true });
 }
 
-// Configuration with your session ID
-const config = {
-    PREFIX: process.env.PREFIX || ".",
-    MODE: process.env.MODE || "public",
-    SESSION_ID: process.env.SESSION_ID || "BERA~H4sIAAAAAAAAA5VUW5OqOBD+K1t5xToqt4hVU7UoqKAoKnjbOg8RAkSuEi7iKf/7FuPMmXnYnZ19Szrp7q+//rp/gSQlFM9xA4a/QJaTChW4PRZNhsEQjErPwznoABcVCAwBWp1uh3vt7JNINyeSVsY7MeOi49XjqiAWu8LKUGR6sRYz+QU8OiArzxFxvghYRKdtMupVWL9Nuv69CKSbOtUMX9JTzuIChmHW8+79klqN/QIebUREcpL4ahbgGOcomuPGRCT/JnxFhErd9WZQ3NvSithdUR+wHKXw5h8dG6JAM058D0PW+B788XzaveLoSi8JddwT3MyMrezux5VgGMTdTKmJ696F23Bq/YRPiZ9gV3NxUpCi+Tbv49XSsNP9qQ/V8Wk+WAROLE4MRWc2VI+80hw3Pok9j+729veAK4F6vG6XSHPUkcVcHHfsCN6lC+Vg7fgrKDHhat+4vnAM7c/AzfxdK+H/4T3UassRlw3UdRwL5r7aDZq9Tmi2Nnrnor/y98pd4Y2A7Yffg59uwt1hMZlVnqiGRyvratQ0hcCx0mMgHboVOgRXMzysDgftAz4qy/wrlNT1wvPGGKwvzZE4Vu23ejYH6yaR5otVpQ3qeOKvF/clf7+buNA9eN4ub7Jy33n2ZDroh7iRTrS5++wuvhijXl9zceC/vFYU4kZzwbD/6IAc+4QWOSpImrQ2ju8A5FZb7OS4eGUX8NRcVq4UNCMuQKUW7Nb3ODsrxioXFofztEbxLM6yoDqQ+gV0QJanDqYUuzNCizRvDEwp8jEFw79+dkCCb8Wzb6/Z+h3gkZwWdlJmUYrc96a+PyLHScuk2DaJM24POAfD3ocZFwVJfNrSWCYodwJS4XGACgqGHooo/l0gzrH7Zvvt3Xq5uEAkoq2odVxX53qqLtkQGnQ6lVVfHvsy+Mj23rUnLYPAXVvsQLFZYV8R+WoI9bLmg+ldSCLHVa8OXV4Fntky1vHlH4KAIfDHrMeH7k2SoJiWYzXaCiWJUijPqMLcjdNxpKkhVPWRaSwvkyiabM/nyai8NpZ6NVU23ehelq2zMF/KG4/RDGYXC+P6pc3m4oo4+HOyvqyf1UwT5kuxOZw5bjPvZmszYq/m1OaFah/MFBOFZgVNy0uuDHKRKu6OmWv3I5k5nuqot0Fh6hn+lkHQSPwZnsmX9VNP8auQiQuGgBV4OIACC6HADVn4J/1Rt/1AWfYjwQXogAS1v1uAOEoznP9xxjkCHRA93TlOZHsDTpQgL7K9NkL78D4z0duuIq9yalO2V4/g19F/C/2fEJ7ktBLrPTqfYrwtk38ZyJGnHWxVquT+stzlvD+/rBzFWWkbypyEw2y3TxYKKrEZViELHo+fHZBFqPDSPG6nOT63ReZp2QpWS7z0q/0q9zTZ97dt2RGihfwxBBaJMS1QnIFhH4qSCDmO5Z+/zDzNZogGLQM7CK82ePwNWIV8a1EHAAA=",
-    AUTO_REACT: true,
-    AUTO_STATUS_SEEN: true,
-    AUTO_STATUS_REPLY: true,
-    STATUS_READ_MSG: "✅ Auto Status Seen Bot By JAWAD-MD"
-};
-
 async function loadGiftedSession() {
     console.log("🔍 Checking SESSION_ID format...");
     
@@ -71,9 +72,9 @@ async function loadGiftedSession() {
         return false;
     }
     
-    // Check if session starts with "BERA~"
+    // FIXED: Changed from "Gifted~" to "BERA~" to match your session ID
     if (config.SESSION_ID.startsWith("BERA~")) {
-        console.log("✅ Detected BERA session format");
+        console.log("✅ Detected BERA session format (GZIP compressed)");
         
         // Extract Base64 part (everything after "BERA~")
         const compressedBase64 = config.SESSION_ID.substring("BERA~".length);
@@ -93,21 +94,29 @@ async function loadGiftedSession() {
                 const decompressedBuffer = await gunzip(compressedBuffer);
                 const sessionData = decompressedBuffer.toString('utf-8');
                 
-                console.log("📄 Decompressed session data length:", sessionData.length);
+                console.log("📄 Decompressed session data (first 200 chars):");
+                console.log(sessionData.substring(0, 200));
+                
+                // Try to parse as JSON
+                try {
+                    const parsedSession = JSON.parse(sessionData);
+                    console.log("✅ Successfully parsed JSON session");
+                    console.log("🔑 Session keys:", Object.keys(parsedSession));
+                } catch (parseError) {
+                    console.log("⚠️ Session data is not JSON, saving as raw string");
+                }
                 
                 // Save session to file
                 await fs.promises.writeFile(credsPath, sessionData);
                 console.log("💾 Session saved to file successfully");
                 return true;
             } else {
-                console.log("⚠️ Not GZIP, trying as raw data...");
-                // Try saving as raw data
-                await fs.promises.writeFile(credsPath, compressedBase64);
-                console.log("💾 Saved as raw Base64 data");
-                return true;
+                console.log("❌ Not a valid GZIP file (missing magic bytes)");
+                return false;
             }
         } catch (error) {
             console.error('❌ Failed to process BERA session:', error.message);
+            console.error('🔍 Error details:', error);
             return false;
         }
     } else {
@@ -135,7 +144,7 @@ async function downloadLegacySession() {
 
     try {
         console.log("📥 Downloading Legacy Session from Mega.nz...");
-        // FIXED: Added backticks around template string
+        // FIXED: Correct template string
         const file = File.fromURL(`https://mega.nz/file/${fileID}#${decryptKey}`);
 
         const data = await new Promise((resolve, reject) => {
@@ -158,7 +167,7 @@ async function start() {
     try {
         const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
         const { version, isLatest } = await fetchLatestBaileysVersion();
-        // FIXED: Added backticks around template string
+        // FIXED: Correct template string
         console.log(`🤖 JAWAD-MD using WA v${version.join('.')}, isLatest: ${isLatest}`);
         
         const Matrix = makeWASocket({
@@ -185,12 +194,9 @@ async function start() {
             } else if (connection === 'open') {
                 if (initialConnection) {
                     console.log(chalk.green("Connected Successfully cloud Ai 🤝"));
-                    // Send welcome message - FIXED: wrapped in async IIFE
-                    (async () => {
-                        try {
-                            await Matrix.sendMessage(Matrix.user.id, { 
-                                image: { url: "https://files.catbox.moe/pf270b.jpg" }, 
-                                caption: `Hello there User! 🙋🏿‍♂️ 
+                    Matrix.sendMessage(Matrix.user.id, { 
+                        image: { url: "https://files.catbox.moe/pf270b.jpg" }, 
+                        caption: `Hello there User! 🙋🏿‍♂️ 
 
 > Simple, Straightforward, But Loaded With Features 🎉. Meet CLOUD-AI WhatsApp Bot.
 
@@ -205,11 +211,7 @@ Don't forget to give a star to the repo ⬇️
 https://github.com/DEVELOPER-BERA/CLOUD-AI
 
 > © REGARDS BERA`
-                            });
-                        } catch (e) {
-                            console.log("⚠️ Could not send welcome message:", e.message);
-                        }
-                    })();
+                    });
                     initialConnection = false;
                 } else {
                     console.log(chalk.blue("♪ Connection reestablished after restart."));
@@ -232,7 +234,9 @@ https://github.com/DEVELOPER-BERA/CLOUD-AI
         Matrix.ev.on('messages.upsert', async (chatUpdate) => {
             try {
                 const mek = chatUpdate.messages[0];
+                console.log(mek);
                 if (!mek.key.fromMe && config.AUTO_REACT) {
+                    console.log(mek);
                     if (mek.message) {
                         const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
                         await doReact(randomEmoji, mek, Matrix);
@@ -270,18 +274,15 @@ https://github.com/DEVELOPER-BERA/CLOUD-AI
 }
 
 async function init() {
-    console.log("🔄 Initializing CLOUD-AI Bot...");
-    console.log("📏 Session ID Length:", config.SESSION_ID.length);
-    console.log("✅ Starts with BERA~:", config.SESSION_ID.startsWith("BERA~"));
-    
     if (fs.existsSync(credsPath)) {
         console.log("✅ Existing session file found, loading it...");
         await start();
     } else {
         console.log("📝 No existing session file, checking config.SESSION_ID...");
         
+        // FIXED: Changed from "Gifted~" to "BERA~"
         if (config.SESSION_ID && config.SESSION_ID.startsWith("BERA~")) {
-            console.log("📥 Attempting to load BERA session...");
+            console.log("📥 Attempting to load BERA session (GZIP compressed)...");
             const sessionLoaded = await loadGiftedSession();
             
             if (sessionLoaded) {
@@ -319,6 +320,6 @@ app.get('/', (req, res) => {
 });
 
 app.listen(PORT, () => {
-    // FIXED: Added backticks around template string
+    // FIXED: Correct template string
     console.log(`Server is running on port ${PORT}`);
 });
